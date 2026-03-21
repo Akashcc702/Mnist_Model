@@ -7,26 +7,36 @@ let drawing = false;
 async function init() {
     console.log("Loading model...");
 
-    model = await tf.loadLayersModel("model/mnist_model.json");
+    model = await tf.loadLayersModel(
+        "https://cdn.jsdelivr.net/gh/Akashcc702/Mnist_Model/model/mnist_model.json"
+    );
 
     console.log("Model Loaded ✅");
 
     canvas = document.getElementById("sketchpad");
     ctx = canvas.getContext("2d");
 
-    // white background
+    // black background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // mouse events
-    canvas.addEventListener("mousedown", startDraw);
+    canvas.addEventListener("mousedown", () => drawing = true);
     canvas.addEventListener("mouseup", stopDraw);
     canvas.addEventListener("mousemove", draw);
 
-    // touch support
-    canvas.addEventListener("touchstart", startDraw);
+    // touch events (fixed)
+    canvas.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        drawing = true;
+    });
+
     canvas.addEventListener("touchend", stopDraw);
-    canvas.addEventListener("touchmove", draw);
+
+    canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        draw(e);
+    });
 
     // buttons
     document.getElementById("predict_button").addEventListener("click", predict);
@@ -34,10 +44,6 @@ async function init() {
 }
 
 // ===== DRAW =====
-function startDraw(e) {
-    drawing = true;
-}
-
 function stopDraw() {
     drawing = false;
     ctx.beginPath();
@@ -47,8 +53,16 @@ function draw(e) {
     if (!drawing) return;
 
     let rect = canvas.getBoundingClientRect();
-    let x = (e.clientX || e.touches[0].clientX) - rect.left;
-    let y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+    let x, y;
+
+    if (e.touches && e.touches.length > 0) {
+        x = e.touches[0].clientX - rect.left;
+        y = e.touches[0].clientY - rect.top;
+    } else {
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
+    }
 
     ctx.lineWidth = 20;
     ctx.lineCap = "round";
@@ -77,7 +91,6 @@ function preprocessCanvas() {
     tempCanvas.width = 28;
     tempCanvas.height = 28;
 
-    // resize
     tempCtx.drawImage(canvas, 0, 0, 28, 28);
 
     let imgData = tempCtx.getImageData(0, 0, 28, 28);
@@ -86,9 +99,8 @@ function preprocessCanvas() {
     let input = [];
 
     for (let i = 0; i < data.length; i += 4) {
-        // take only one channel (grayscale)
-        let avg = data[i]; 
-        input.push(avg / 255);
+        let pixel = data[i]; // grayscale
+        input.push(pixel / 255);
     }
 
     return tf.tensor(input).reshape([1, 28, 28, 1]);
@@ -96,15 +108,18 @@ function preprocessCanvas() {
 
 // ===== PREDICT =====
 async function predict() {
-    let input = preprocessCanvas();
+    const input = preprocessCanvas();
 
-    let prediction = model.predict(input);
-    let probs = prediction.dataSync();
+    const prediction = model.predict(input);
+    const probs = prediction.dataSync();
 
-    let max = Math.max(...probs);
-    let result = probs.indexOf(max);
+    const max = Math.max(...probs);
+    const result = probs.indexOf(max);
 
     document.getElementById("result").innerText = result;
     document.getElementById("confidence").innerText =
         "Confidence: " + (max * 100).toFixed(2) + "%";
+
+    // cleanup (IMPORTANT)
+    tf.dispose([input, prediction]);
 }
