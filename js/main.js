@@ -50,10 +50,8 @@ async function init() {
     document.getElementById("predict_button").addEventListener("click", predict);
     document.getElementById("clear_button").addEventListener("click", clearCanvas);
 
-    // 🔥 Voice preload fix (important)
-    speechSynthesis.onvoiceschanged = () => {
-        speechSynthesis.getVoices();
-    };
+    // preload voices (important fix)
+    speechSynthesis.getVoices();
 }
 
 // ===== DRAW =====
@@ -108,82 +106,6 @@ function preprocessCanvas() {
     let imgData = tempCtx.getImageData(0, 0, 28, 28);
     let data = imgData.data;
 
-    let input = [];
-
-    for (let i = 0; i < data.length; i += 4) {
-        let pixel = data[i];
-        input.push(pixel / 255);
-    }
-
-    return tf.tensor(input).reshape([1, 28, 28, 1]);
-}
-
-// ===== SPEECH FUNCTION =====
-function speakNumber(number) {
-
-    // 🔊 Voice toggle check
-    const voiceEnabled = document.getElementById("voice_toggle")?.checked;
-    if (!voiceEnabled) return;
-
-    const lang = document.getElementById("language_select")?.value || "en";
-
-    let text = "";
-    let languageCode = "en-US";
-
-    if (lang === "kn") {
-        text = "ನೀವು ಬರೆದ ಸಂಖ್ಯೆ " + number;
-        languageCode = "kn-IN";
-    } else {
-        text = "The predicted number is " + number;
-        languageCode = "en-US";
-    }
-
-    const msg = new SpeechSynthesisUtterance(text);
-    msg.lang = languageCode;
-    msg.rate = 0.9;
-    msg.pitch = 1;
-
-    // 🔥 Smart voice selection
-    const voices = speechSynthesis.getVoices();
-
-    let selectedVoice =
-        voices.find(v => v.lang === languageCode) ||
-        voices.find(v => v.lang.includes("en")) ||
-        voices[0];
-
-    if (selectedVoice) msg.voice = selectedVoice;
-
-    // stop previous speech
-    speechSynthesis.cancel();
-    speechSynthesis.speak(msg);
-}
-
-// ===== PREDICT =====
-async function predict() {
-    if (!model) {
-        alert("Model not loaded yet ❌");
-        return;
-    }
-
-    document.getElementById("result").innerText = "...";
-
-    const input = preprocessCanvas();
-
-    const prediction = model.predict(input);
-    const probs = prediction.dataSync();
-
-    const max = Math.max(...probs);
-    const result = probs.indexOf(max);
-
-    document.getElementById("result").innerText = result;
-    document.getElementById("confidence").innerText =
-        "Confidence: " + (max * 100).toFixed(2) + "%";
-
-    // 🔊 SPEAK RESULT
-    speakNumber(result);
-
-    tf.dispose([input, prediction]);
-}
     let input = [];
 
     for (let i = 0; i < data.length; i += 4) {
