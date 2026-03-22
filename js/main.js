@@ -8,16 +8,13 @@ async function init() {
     console.log("INIT CALLED");
 
     try {
-        // 🔥 Loading indicator
         document.getElementById("result").innerText = "Loading...";
 
-        // ✅ Load model (CDN)
         model = await tf.loadLayersModel(
             "https://cdn.jsdelivr.net/gh/Akashcc702/Mnist_Model/model/mnist_model.json"
         );
 
         console.log("Model Loaded ✅");
-
         document.getElementById("result").innerText = "Ready";
 
     } catch (error) {
@@ -29,18 +26,15 @@ async function init() {
     canvas = document.getElementById("sketchpad");
     ctx = canvas.getContext("2d");
 
-    // black background
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // ===== EVENTS =====
 
-    // mouse
     canvas.addEventListener("mousedown", () => drawing = true);
     canvas.addEventListener("mouseup", stopDraw);
     canvas.addEventListener("mousemove", draw);
 
-    // touch (mobile fix)
     canvas.addEventListener("touchstart", (e) => {
         e.preventDefault();
         drawing = true;
@@ -53,9 +47,11 @@ async function init() {
         draw(e);
     });
 
-    // buttons
     document.getElementById("predict_button").addEventListener("click", predict);
     document.getElementById("clear_button").addEventListener("click", clearCanvas);
+
+    // preload voices (important fix)
+    speechSynthesis.getVoices();
 }
 
 // ===== DRAW =====
@@ -105,7 +101,80 @@ function preprocessCanvas() {
     tempCanvas.width = 28;
     tempCanvas.height = 28;
 
-    // resize
+    tempCtx.drawImage(canvas, 0, 0, 28, 28);
+
+    let imgData = tempCtx.getImageData(0, 0, 28, 28);
+    let data = imgData.data;
+
+    let input = [];
+
+    for (let i = 0; i < data.length; i += 4) {
+        let pixel = data[i];
+        input.push(pixel / 255);
+    }
+
+    return tf.tensor(input).reshape([1, 28, 28, 1]);
+}
+
+// ===== SPEECH FUNCTION =====
+function speakNumber(number) {
+    const lang = document.getElementById("language_select").value;
+
+    let text = "";
+    let languageCode = "en-US";
+
+    if (lang === "kn") {
+        text = "ನೀವು ಬರೆದ ಸಂಖ್ಯೆ " + number;
+        languageCode = "kn-IN";
+    } else {
+        text = "The predicted number is " + number;
+        languageCode = "en-US";
+    }
+
+    const msg = new SpeechSynthesisUtterance(text);
+    msg.lang = languageCode;
+    msg.rate = 0.9;
+    msg.pitch = 1;
+
+    // better voice selection
+    const voices = speechSynthesis.getVoices();
+    const selectedVoice =
+        voices.find(v => v.lang === languageCode) ||
+        voices.find(v => v.lang.includes("en")) ||
+        voices[0];
+
+    if (selectedVoice) msg.voice = selectedVoice;
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(msg);
+}
+
+// ===== PREDICT =====
+async function predict() {
+    if (!model) {
+        alert("Model not loaded yet ❌");
+        return;
+    }
+
+    document.getElementById("result").innerText = "...";
+
+    const input = preprocessCanvas();
+
+    const prediction = model.predict(input);
+    const probs = prediction.dataSync();
+
+    const max = Math.max(...probs);
+    const result = probs.indexOf(max);
+
+    document.getElementById("result").innerText = result;
+    document.getElementById("confidence").innerText =
+        "Confidence: " + (max * 100).toFixed(2) + "%";
+
+    // 🔊 SPEAK RESULT
+    speakNumber(result);
+
+    tf.dispose([input, prediction]);
+}    // resize
     tempCtx.drawImage(canvas, 0, 0, 28, 28);
 
     let imgData = tempCtx.getImageData(0, 0, 28, 28);
