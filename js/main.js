@@ -174,43 +174,4 @@ async function predict() {
     speakNumber(result);
 
     tf.dispose([input, prediction]);
-}    // resize
-    tempCtx.drawImage(canvas, 0, 0, 28, 28);
-
-    let imgData = tempCtx.getImageData(0, 0, 28, 28);
-    let data = imgData.data;
-
-    let input = [];
-
-    for (let i = 0; i < data.length; i += 4) {
-        let pixel = data[i]; // grayscale
-        input.push(pixel / 255);
-    }
-
-    return tf.tensor(input).reshape([1, 28, 28, 1]);
-}
-
-// ===== PREDICT =====
-async function predict() {
-    if (!model) {
-        alert("Model not loaded yet ❌");
-        return;
-    }
-
-    document.getElementById("result").innerText = "...";
-
-    const input = preprocessCanvas();
-
-    const prediction = model.predict(input);
-    const probs = prediction.dataSync();
-
-    const max = Math.max(...probs);
-    const result = probs.indexOf(max);
-
-    document.getElementById("result").innerText = result;
-    document.getElementById("confidence").innerText =
-        "Confidence: " + (max * 100).toFixed(2) + "%";
-
-    // cleanup
-    tf.dispose([input, prediction]);
 }
