@@ -18,37 +18,65 @@
   <!-- CSS -->
   <link rel="stylesheet" href="css/styles.css">
 
-  <!-- TensorFlow.js (FIXED VERSION) -->
+  <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
 
 </head>
 
 <body onload="init()">
 
+  <!-- 🌙 Theme Toggle -->
   <div class="theme-toggle">
     <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()">
       <i id="theme-icon" class="fas fa-moon"></i>
     </button>
   </div>
 
+  <!-- 🧠 Header -->
   <header class="welcome text-center mt-3">
     <h1>Handwritten Digit Recognition</h1>
   </header>
 
-  <section class="text-center py-4">
+  <section class="text-center py-3">
     <p>Draw a digit (0–9) and click predict</p>
   </section>
 
+  <!-- 🌐 Language + Voice Controls -->
+  <section class="text-center mb-3">
+
+    <label><b>Language:</b></label>
+
+    <select id="language_select" class="ml-2 p-1">
+      <option value="en">English</option>
+      <option value="kn">Kannada</option>
+    </select>
+
+    <!-- 🔊 Voice Toggle -->
+    <label class="ml-3">
+      <input type="checkbox" id="voice_toggle" checked>
+      🔊 Voice
+    </label>
+
+  </section>
+
+  <!-- 🎨 Canvas -->
   <section class="d-flex justify-content-center">
     <div class="text-center">
 
       <canvas id="sketchpad" width="300" height="300" style="border:2px solid #000;"></canvas>
 
+      <!-- 🎮 Buttons -->
       <div class="mt-3">
-        <button class="btn btn-primary" id="predict_button">Predict</button>
-        <button class="btn btn-danger" id="clear_button">Clear</button>
+        <button class="btn btn-primary" id="predict_button">
+          <i class="fas fa-brain"></i> Predict
+        </button>
+
+        <button class="btn btn-danger" id="clear_button">
+          <i class="fas fa-eraser"></i> Clear
+        </button>
       </div>
 
+      <!-- 📊 Result -->
       <div class="mt-4">
         <h3>Prediction: <span id="result">-</span></h3>
         <p id="confidence">Confidence: -</p>
@@ -60,6 +88,7 @@
   <!-- Scripts -->
   <script src="js/main.js"></script>
 
+  <!-- 🌙 Theme Script -->
   <script>
     function toggleTheme() {
       document.body.classList.toggle("dark-mode");
