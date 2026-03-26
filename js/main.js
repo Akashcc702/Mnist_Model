@@ -128,7 +128,7 @@ function speakNumber(number) {
     let languageCode = "en-US";
 
     if (lang === "kn") {
-        text = "ನೀವು ಬರೆದ ಸಂಖ್ಯೆ " + number;
+        text = "nivu bareda sanke " + number;
         languageCode = "kn-IN";
     } else {
         text = "The predicted number is " + number;
