@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 
 <head>
@@ -21,8 +21,8 @@
   <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
 
-  <!-- ✅ Chart.js (NEW) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- ✅ FIXED Chart.js (IMPORTANT) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 </head>
 
@@ -85,10 +85,10 @@
         <p id="confidence">Confidence: -</p>
       </div>
 
-      <!-- ✅ 📊 Graph Section (NEW) -->
-      <div class="mt-4">
+      <!-- ✅ 📊 Graph Section -->
+      <div class="mt-4" style="width: 100%; max-width: 400px; margin: auto;">
         <h4>Prediction Confidence Graph</h4>
-        <canvas id="myChart" width="300" height="200"></canvas>
+        <canvas id="myChart"></canvas>
       </div>
 
     </div>
