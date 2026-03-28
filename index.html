@@ -21,6 +21,9 @@
   <!-- TensorFlow.js -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
 
+  <!-- ✅ Chart.js (NEW) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 
 <body onload="init()">
@@ -80,6 +83,12 @@
       <div class="mt-4">
         <h3>Prediction: <span id="result">-</span></h3>
         <p id="confidence">Confidence: -</p>
+      </div>
+
+      <!-- ✅ 📊 Graph Section (NEW) -->
+      <div class="mt-4">
+        <h4>Prediction Confidence Graph</h4>
+        <canvas id="myChart" width="300" height="200"></canvas>
       </div>
 
     </div>
