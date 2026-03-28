@@ -91,7 +91,7 @@ function clearCanvas() {
 
     if (chart) {
         chart.data.datasets[0].data = [0,0,0,0,0,0,0,0,0,0];
-        chart.update('none');
+        chart.update('none'); // ❌ no animation
     }
 }
 
@@ -131,21 +131,24 @@ function createGraph(data) {
     }
 
     chart = new Chart(ctxChart, {
-        type: 'bar',
+        type: 'line', // ✅ LINE CHART
         data: {
             labels: ['0','1','2','3','4','5','6','7','8','9'],
             datasets: [{
                 label: 'Confidence',
                 data: data,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
+                fill: false,
+                tension: 0.3 // smooth curve
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false,
-            animation: false, // 🔥 stop running issue
+            animation: false, // ❌ STOP RUNNING
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
             scales: {
                 y: {
                     beginAtZero: true,
@@ -164,12 +167,11 @@ function updateGraph(data) {
     }
 
     chart.data.datasets[0].data = data;
-    chart.update('none'); // 🔥 no animation loop
+    chart.update('none'); // ❌ NO ANIMATION
 }
 
 // ===== SPEECH =====
 function speakNumber(number) {
-
     const toggle = document.getElementById("voice_toggle");
     if (toggle && !toggle.checked) return;
 
