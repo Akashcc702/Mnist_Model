@@ -2,7 +2,7 @@
 let model;
 let canvas, ctx;
 let drawing = false;
-let chart; // ✅ Graph instance
+let chart = null; // Graph instance
 
 // ===== INIT =====
 async function init() {
@@ -50,8 +50,7 @@ async function init() {
 
     speechSynthesis.getVoices();
 
-    // ✅ Initialize empty graph
-    createGraph([0,0,0,0,0,0,0,0,0,0]);
+    // ❌ REMOVE GRAPH FROM INIT (IMPORTANT FIX)
 }
 
 // ===== DRAW =====
@@ -92,8 +91,11 @@ function clearCanvas() {
     document.getElementById("result").innerText = "-";
     document.getElementById("confidence").innerText = "Confidence: -";
 
-    // ✅ Reset graph
-    updateGraph([0,0,0,0,0,0,0,0,0,0]);
+    // Reset graph safely
+    if (chart) {
+        chart.data.datasets[0].data = [0,0,0,0,0,0,0,0,0,0];
+        chart.update();
+    }
 }
 
 // ===== PREPROCESS =====
@@ -121,7 +123,19 @@ function preprocessCanvas() {
 
 // ===== GRAPH CREATE =====
 function createGraph(data) {
-    const ctxChart = document.getElementById("myChart").getContext("2d");
+    const canvasEl = document.getElementById("myChart");
+
+    if (!canvasEl) {
+        console.error("Graph canvas not found ❌");
+        return;
+    }
+
+    const ctxChart = canvasEl.getContext("2d");
+
+    // Destroy old chart (IMPORTANT FIX)
+    if (chart) {
+        chart.destroy();
+    }
 
     chart = new Chart(ctxChart, {
         type: 'bar',
@@ -135,6 +149,7 @@ function createGraph(data) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             animation: {
                 duration: 800
             },
@@ -150,7 +165,10 @@ function createGraph(data) {
 
 // ===== GRAPH UPDATE =====
 function updateGraph(data) {
-    if (!chart) return;
+    if (!chart) {
+        createGraph(data); // Create first time
+        return;
+    }
 
     chart.data.datasets[0].data = data;
     chart.update();
@@ -169,7 +187,7 @@ function speakNumber(number) {
     let languageCode = "en-US";
 
     if (lang === "kn") {
-        text = "ನೀವು ಬರೆದ ಸಂಕೆ  " + number;
+        text = "ನೀವು ಬರೆದ ಸಂಕೆ " + number;
         languageCode = "kn-IN";
     } else {
         text = "The predicted number is " + number;
@@ -203,7 +221,7 @@ async function predict() {
     const input = preprocessCanvas();
 
     const prediction = model.predict(input);
-    const probs = prediction.dataSync(); // ✅ array (0–9 probabilities)
+    const probs = prediction.dataSync();
 
     const max = Math.max(...probs);
     const result = probs.indexOf(max);
@@ -212,7 +230,7 @@ async function predict() {
     document.getElementById("confidence").innerText =
         "Confidence: " + (max * 100).toFixed(2) + "%";
 
-    // ✅ UPDATE GRAPH HERE
+    // ✅ GRAPH FIXED HERE
     updateGraph(probs);
 
     speakNumber(result);
