@@ -2,6 +2,7 @@
 let model;
 let canvas, ctx;
 let drawing = false;
+let chart; // ✅ Graph instance
 
 // ===== INIT =====
 async function init() {
@@ -10,10 +11,7 @@ async function init() {
     try {
         document.getElementById("result").innerText = "Loading...";
 
-        // ✅ FIXED MODEL PATH (same repo)
-        model = await tf.loadLayersModel(
-            "./model/mnist_model.json"
-        );
+        model = await tf.loadLayersModel("./model/mnist_model.json");
 
         console.log("Model Loaded ✅");
         document.getElementById("result").innerText = "Ready";
@@ -51,6 +49,9 @@ async function init() {
     document.getElementById("clear_button").addEventListener("click", clearCanvas);
 
     speechSynthesis.getVoices();
+
+    // ✅ Initialize empty graph
+    createGraph([0,0,0,0,0,0,0,0,0,0]);
 }
 
 // ===== DRAW =====
@@ -90,6 +91,9 @@ function clearCanvas() {
 
     document.getElementById("result").innerText = "-";
     document.getElementById("confidence").innerText = "Confidence: -";
+
+    // ✅ Reset graph
+    updateGraph([0,0,0,0,0,0,0,0,0,0]);
 }
 
 // ===== PREPROCESS =====
@@ -108,11 +112,48 @@ function preprocessCanvas() {
     let input = [];
 
     for (let i = 0; i < data.length; i += 4) {
-        let pixel = data[i]; // grayscale
+        let pixel = data[i];
         input.push(pixel / 255);
     }
 
     return tf.tensor(input).reshape([1, 28, 28, 1]);
+}
+
+// ===== GRAPH CREATE =====
+function createGraph(data) {
+    const ctxChart = document.getElementById("myChart").getContext("2d");
+
+    chart = new Chart(ctxChart, {
+        type: 'bar',
+        data: {
+            labels: ['0','1','2','3','4','5','6','7','8','9'],
+            datasets: [{
+                label: 'Confidence',
+                data: data,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 800
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1
+                }
+            }
+        }
+    });
+}
+
+// ===== GRAPH UPDATE =====
+function updateGraph(data) {
+    if (!chart) return;
+
+    chart.data.datasets[0].data = data;
+    chart.update();
 }
 
 // ===== SPEECH =====
@@ -162,7 +203,7 @@ async function predict() {
     const input = preprocessCanvas();
 
     const prediction = model.predict(input);
-    const probs = prediction.dataSync();
+    const probs = prediction.dataSync(); // ✅ array (0–9 probabilities)
 
     const max = Math.max(...probs);
     const result = probs.indexOf(max);
@@ -170,6 +211,9 @@ async function predict() {
     document.getElementById("result").innerText = result;
     document.getElementById("confidence").innerText =
         "Confidence: " + (max * 100).toFixed(2) + "%";
+
+    // ✅ UPDATE GRAPH HERE
+    updateGraph(probs);
 
     speakNumber(result);
 
