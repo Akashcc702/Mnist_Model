@@ -3,6 +3,7 @@ let model;
 let canvas, ctx;
 let drawing = false;
 let chart = null;
+let voicesLoaded = false;
 
 // ===== INIT =====
 async function init() {
@@ -48,7 +49,11 @@ async function init() {
     document.getElementById("predict_button").addEventListener("click", predict);
     document.getElementById("clear_button").addEventListener("click", clearCanvas);
 
-    speechSynthesis.getVoices();
+    // 🔥 FIX: Ensure voices load properly
+    speechSynthesis.onvoiceschanged = () => {
+        voicesLoaded = true;
+        console.log("Voices Loaded ✅");
+    };
 }
 
 // ===== DRAW =====
@@ -91,7 +96,7 @@ function clearCanvas() {
 
     if (chart) {
         chart.data.datasets[0].data = [0,0,0,0,0,0,0,0,0,0];
-        chart.update('none'); // ❌ no animation
+        chart.update('none');
     }
 }
 
@@ -118,7 +123,7 @@ function preprocessCanvas() {
     return tf.tensor(input).reshape([1, 28, 28, 1]);
 }
 
-// ===== GRAPH CREATE =====
+// ===== GRAPH =====
 function createGraph(data) {
     const canvasEl = document.getElementById("myChart");
     if (!canvasEl) return;
@@ -131,24 +136,19 @@ function createGraph(data) {
     }
 
     chart = new Chart(ctxChart, {
-        type: 'line', // ✅ LINE CHART
+        type: 'line',
         data: {
             labels: ['0','1','2','3','4','5','6','7','8','9'],
             datasets: [{
                 label: 'Confidence',
                 data: data,
                 fill: false,
-                tension: 0.3 // smooth curve
+                tension: 0.3
             }]
         },
         options: {
             responsive: true,
-            animation: false, // ❌ STOP RUNNING
-            plugins: {
-                legend: {
-                    display: true
-                }
-            },
+            animation: false,
             scales: {
                 y: {
                     beginAtZero: true,
@@ -159,7 +159,6 @@ function createGraph(data) {
     });
 }
 
-// ===== GRAPH UPDATE =====
 function updateGraph(data) {
     if (!chart) {
         createGraph(data);
@@ -167,22 +166,21 @@ function updateGraph(data) {
     }
 
     chart.data.datasets[0].data = data;
-    chart.update('none'); // ❌ NO ANIMATION
+    chart.update('none');
 }
 
-// ===== SPEECH =====
+// ===== SPEECH (FIXED) =====
 function speakNumber(number) {
     const toggle = document.getElementById("voice_toggle");
     if (toggle && !toggle.checked) return;
 
-    const langEl = document.getElementById("language_select");
-    const lang = langEl ? langEl.value : "en";
+    let lang = document.getElementById("language_select").value;
 
     let text = "";
     let languageCode = "en-US";
 
     if (lang === "kn") {
-        text = "ನೀವು ಬರೆದ ಸಂಕೆ " + number;
+        text = "ನೀವು ಬರೆದ ಸಂಖ್ಯೆ " + number;
         languageCode = "kn-IN";
     } else {
         text = "The predicted number is " + number;
@@ -192,11 +190,15 @@ function speakNumber(number) {
     msg.lang = languageCode;
     msg.rate = 0.9;
 
-    const voices = speechSynthesis.getVoices();
-    const voice =
+    let voices = speechSynthesis.getVoices();
+
+    if (voices.length === 0) {
+        console.warn("Voices not loaded yet");
+    }
+
+    let voice =
         voices.find(v => v.lang === languageCode) ||
-        voices.find(v => v.lang.includes("en")) ||
-        voices[0];
+        voices.find(v => v.lang.includes("en"));
 
     if (voice) msg.voice = voice;
 
