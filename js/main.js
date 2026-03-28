@@ -2,7 +2,7 @@
 let model;
 let canvas, ctx;
 let drawing = false;
-let chart = null; // Graph instance
+let chart = null;
 
 // ===== INIT =====
 async function init() {
@@ -28,7 +28,7 @@ async function init() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // ===== EVENTS =====
+    // EVENTS
     canvas.addEventListener("mousedown", () => drawing = true);
     canvas.addEventListener("mouseup", stopDraw);
     canvas.addEventListener("mousemove", draw);
@@ -49,8 +49,6 @@ async function init() {
     document.getElementById("clear_button").addEventListener("click", clearCanvas);
 
     speechSynthesis.getVoices();
-
-    // ❌ REMOVE GRAPH FROM INIT (IMPORTANT FIX)
 }
 
 // ===== DRAW =====
@@ -91,10 +89,9 @@ function clearCanvas() {
     document.getElementById("result").innerText = "-";
     document.getElementById("confidence").innerText = "Confidence: -";
 
-    // Reset graph safely
     if (chart) {
         chart.data.datasets[0].data = [0,0,0,0,0,0,0,0,0,0];
-        chart.update();
+        chart.update('none');
     }
 }
 
@@ -124,17 +121,13 @@ function preprocessCanvas() {
 // ===== GRAPH CREATE =====
 function createGraph(data) {
     const canvasEl = document.getElementById("myChart");
-
-    if (!canvasEl) {
-        console.error("Graph canvas not found ❌");
-        return;
-    }
+    if (!canvasEl) return;
 
     const ctxChart = canvasEl.getContext("2d");
 
-    // Destroy old chart (IMPORTANT FIX)
     if (chart) {
         chart.destroy();
+        chart = null;
     }
 
     chart = new Chart(ctxChart, {
@@ -144,15 +137,15 @@ function createGraph(data) {
             datasets: [{
                 label: 'Confidence',
                 data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 1
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: {
-                duration: 800
-            },
+            animation: false, // 🔥 stop running issue
             scales: {
                 y: {
                     beginAtZero: true,
@@ -166,12 +159,12 @@ function createGraph(data) {
 // ===== GRAPH UPDATE =====
 function updateGraph(data) {
     if (!chart) {
-        createGraph(data); // Create first time
+        createGraph(data);
         return;
     }
 
     chart.data.datasets[0].data = data;
-    chart.update();
+    chart.update('none'); // 🔥 no animation loop
 }
 
 // ===== SPEECH =====
@@ -230,7 +223,6 @@ async function predict() {
     document.getElementById("confidence").innerText =
         "Confidence: " + (max * 100).toFixed(2) + "%";
 
-    // ✅ GRAPH FIXED HERE
     updateGraph(probs);
 
     speakNumber(result);
